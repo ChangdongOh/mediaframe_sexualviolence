@@ -54,6 +54,7 @@ for(i in 1:K){
 }
 
 write.xlsx(topics, paste0(seed, 'Topics ', K, '.xlsx'))
+write_csv(topics[-1,], 'Topics 95.csv')
 
 # write topic distribution table
 propbydoc = make.dt(stmmodel)
