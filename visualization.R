@@ -95,7 +95,7 @@ topics <- read_csv("topicnadmeta.csv")
 topics$month = as.factor(floor(topics$month/3))
 topics$press = topics$press %>% as.factor()
 
-fil_data = as.data.frame(matrix(ncol=98))[-1,]
+df = as.data.frame(matrix(ncol=98))[-1,]
 for(i in levels(topics$month)){
   for(j in levels(topics$press)){
     sub_set = filter(topics, month == i & press == j)
@@ -104,11 +104,11 @@ for(i in levels(topics$month)){
     metalevel_subset$month = i
     metalevel_subset$press = j
     metalevel_subset$num = sum(sub_set$num)
-    fil_data = rbind(fil_data, metalevel_subset)
+    df = rbind(df, metalevel_subset)
   }
 }
 
-df = fil_data
+
 df = filter(df, num != 0)
 df$month = as.integer(df$month)
 # 반응 및 대책의 방향
@@ -116,7 +116,7 @@ solution_punish = df$Topic1 + df$Topic5 + df$Topic29 + df$Topic65 + df$Topic69 +
 solution_str = df$Topic2 + df$Topic35 + df$Topic49 + df$Topic55 + df$Topic70 + df$Topic88
 # 범죄에 대한 묘사
 sens_depiction = df$Topic28 + df$Topic36 + df$Topic61 + df$Topic75
-empathy_nar = df$Topic51 + df$Topic73 + df$Topic80
+empathy_nar = df$Topic51 + df$Topic73
 objective_desc = df$Topic10 + df$Topic23 + df$Topic27 + df$Topic43 + 
   df$Topic45 + df$Topic60 + df$Topic64 + df$Topic67 + df$Topic87
 # 가해자의 이미지
@@ -149,7 +149,7 @@ rm(solution_punish, solution_str, sens_depiction, empathy_nar, objective_desc,
    space_public, space_school, space_sports_entertainment,
    space_world)
 
-graph = function(df, string, filename){
+topicplot = function(df, string, filename){
   sub_data = df %>% filter(grepl(string, press))
   sub_data = sub_data[1:18] %>%
     group_by(month) %>% 
@@ -174,7 +174,7 @@ graph = function(df, string, filename){
           axis.ticks.y = element_blank(),
           axis.ticks.x = element_blank()) + 
     coord_cartesian(xlim = c(-0.0001, 67), 
-                    ylim = c(-max(d$value)*0.08, max(d$value)*1.11), expand = FALSE) +
+                    ylim = c(-0.04, 0.31), expand = FALSE) +
     labs(list(title = paste0('시간 변화에 따른 토픽 규모 변화 - ', filename),
               x = '시기(연도 및 월)', 
               y = '토픽이 차지하는 비율')) +
@@ -187,42 +187,7 @@ graph = function(df, string, filename){
              x = seq(2, 66, 4),
              y = -max(d$value)*0.06, size = 3,
              label = seq(2002, 2018, 1))
-  ggsave(paste0('images/', filename, ' solutions.png'), width = 30, height=24, dpi = 300, units="cm")
-  sub_data
-  
-  d = sub_data %>% select(c('sens_depiction', 'empathy_nar', 'objective_desc',
-                            'month'))
-  names(d) = c('묘사: 자극적 표현 중', '묘사: 내러티브와 동정심', 
-               '묘사: 사실관계 위주 서술', 'month')
-  d = melt(d, id.vars='month')
-  ggplot(data = d, 
-         mapping = aes(x = month, y = value, fill = variable, color = variable)) +
-    geom_line(lwd = 1.5) +
-    scale_colour_discrete(name = '프레임') +
-    theme(panel.grid.minor = element_blank(), 
-          panel.grid.major = element_line(color = "gray50", size = 0.5),
-          panel.grid.major.x = element_blank(),
-          panel.background = element_blank(),
-          plot.title = element_text(hjust = 0.5),
-          axis.ticks.length = unit(.25, "cm"),
-          axis.text.x = element_text(angle = 90, hjust = 1, size = 11, face='bold'),
-          axis.ticks.y = element_blank(),
-          axis.ticks.x = element_blank()) + 
-    coord_cartesian(xlim = c(-0.0001, 67), 
-                    ylim = c(-max(d$value)*0.08, max(d$value)*1.11), expand = FALSE) +
-    labs(list(title = paste0('시간 변화에 따른 토픽 규모 변화 - ', filename),
-              x = '시기(연도 및 월)', 
-              y = '토픽이 차지하는 비율')) +
-    scale_x_continuous(breaks = (c(0,50)), labels=c('', '')) +
-    annotate(geom = 'text', 
-             x = seq(1, 66, 1),
-             y = -max(d$value)*0.03, size = 2,
-             label = c(rep(c('1', '4', '7', '10'), 16), '1', '4')) +
-    annotate(geom = 'text', 
-             x = seq(2, 66, 4),
-             y = -max(d$value)*0.06, size = 3,
-             label = seq(2002, 2018, 1))
-  ggsave(paste0('images/', filename, ' images.png'), width = 30, height=24, dpi = 300, units="cm")
+  ggsave(paste0('images/solutions ', filename, '.png'), width = 30, height=24, dpi = 300, units="cm")
   
   d = sub_data %>% select(c('mental_disorder', 'acquaintance_repeat', 'intimate_partner',
                             'month'))
@@ -243,7 +208,7 @@ graph = function(df, string, filename){
           axis.ticks.y = element_blank(),
           axis.ticks.x = element_blank()) + 
     coord_cartesian(xlim = c(-0.0001, 67), 
-                    ylim = c(-max(d$value)*0.08, max(d$value)*1.11), expand = FALSE) +
+                    ylim = c(-0.04, 0.11), expand = FALSE) +
     labs(list(title = paste0('시간 변화에 따른 토픽 규모 변화 - ', filename),
               x = '시기(연도 및 월)', 
               y = '토픽이 차지하는 비율')) +
@@ -256,12 +221,12 @@ graph = function(df, string, filename){
              x = seq(2, 66, 4),
              y = -max(d$value)*0.06, size = 3,
              label = seq(2002, 2018, 1))
-  ggsave(paste0('images/', filename, ' stereotypes_criminal.png'), width = 30, height=24, dpi = 300, units="cm")
+  ggsave(paste0('images/stereotypes_criminal ', filename, '.png'), width = 30, height=24, dpi = 300, units="cm")
   
   
   d = sub_data %>% select(c('sens_depiction', 'empathy_nar', 'objective_desc',
                             'month'))
-  names(d) = c('묘사: 자극적 표현 중', '묘사: 내러티브와 동정심', 
+  names(d) = c('묘사: 자극적 표현 중심', '묘사: 내러티브와 동정심', 
                '묘사: 사실관계 위주 서술', 'month')
   d = melt(d, id.vars='month')
   ggplot(data = d, 
@@ -278,7 +243,7 @@ graph = function(df, string, filename){
           axis.ticks.y = element_blank(),
           axis.ticks.x = element_blank()) + 
     coord_cartesian(xlim = c(-0.0001, 67), 
-                    ylim = c(-max(d$value)*0.08, max(d$value)*1.11), expand = FALSE) +
+                    ylim = c(-0.04, 0.31), expand = FALSE) +
     labs(list(title = paste0('시간 변화에 따른 토픽 규모 변화 - ', filename),
               x = '시기(연도 및 월)', 
               y = '토픽이 차지하는 비율')) +
@@ -291,7 +256,7 @@ graph = function(df, string, filename){
              x = seq(2, 66, 4),
              y = -max(d$value)*0.06, size = 3,
              label = seq(2002, 2018, 1))
-  ggsave(paste0('images/', filename, ' images.png'), width = 30, height=24, dpi = 300, units="cm")
+  ggsave(paste0('images/description ', filename, '.png'), width = 30, height=24, dpi = 300, units="cm")
   
   
   d = sub_data %>% select('space_art', 'space_politics', 'space_sports_entertainment',
@@ -312,7 +277,7 @@ graph = function(df, string, filename){
           axis.ticks.y = element_blank(),
           axis.ticks.x = element_blank()) + 
     coord_cartesian(xlim = c(-0.0001, 67), 
-                    ylim = c(-max(d$value)*0.08, max(d$value)*1.11), expand = FALSE) +
+                    ylim = c(-0.04, 0.31), expand = FALSE) +
     labs(list(title = paste0('시간 변화에 따른 토픽 규모 변화 - ', filename),
               x = '시기(연도 및 월)', 
               y = '토픽이 차지하는 비율')) +
@@ -325,7 +290,7 @@ graph = function(df, string, filename){
              x = seq(2, 66, 4),
              y = -max(d$value)*0.06, size = 3,
              label = seq(2002, 2018, 1))
-  ggsave(paste0('images/', filename, ' space_person.png'), width = 30, height=24, dpi = 300, units="cm")
+  ggsave(paste0('images/background_person ', filename, '.png'), width = 30, height=24, dpi = 300, units="cm")
   
   d = sub_data %>% select('space_organization', 'space_professional', 'space_digital_emotion',
                           'space_school', 'space_public', 'month')
@@ -346,7 +311,7 @@ graph = function(df, string, filename){
           axis.ticks.y = element_blank(),
           axis.ticks.x = element_blank()) + 
     coord_cartesian(xlim = c(-0.0001, 67), 
-                    ylim = c(-max(d$value)*0.08, max(d$value)*1.11), expand = FALSE) +
+                    ylim = c(-0.04, 0.2), expand = FALSE) +
     labs(list(title = paste0('시간 변화에 따른 토픽 규모 변화 - ', filename),
               x = '시기(연도 및 월)', 
               y = '토픽이 차지하는 비율')) +
@@ -359,15 +324,51 @@ graph = function(df, string, filename){
              x = seq(2, 66, 4),
              y = -max(d$value)*0.06, size = 3,
              label = seq(2002, 2018, 1))
-  ggsave(paste0('images/', filename, ' space_place.png'), width = 30, height=24, dpi = 300, units="cm")
+  ggsave(paste0('images/background_community ', filename, '.png'), width = 30, height=24, dpi = 300, units="cm")
 }
 
-graph(df, '', '전체')
-graph(df, '경향신문|한겨레', '진보')
-graph(df, '조선일보|동아일보', '보수')
-graph(df, 'KBS|SBS|MBC', '방송사')
-graph(df, '매일경제|한국경제', '경제신문')
+topicplot(df, '', '전체')
+topicplot(df, '경향신문|한겨레', '진보')
+topicplot(df, '조선일보|동아일보', '보수')
+topicplot(df, 'KBS|SBS|MBC', '방송사')
+topicplot(df, '조선일보|동아일보|중앙일보|한겨레|경향신문', '종합일간지')
+topicplot(df, '매일경제|한국경제', '경제신문')
 for(i in levels(topics$press)){
-  graph(df, i, i)
+  topicplot(df, i, i)
 }
 
+
+#
+
+d = sub_data %>% select(c('solution_punish', 'solution_str',
+                          'month'))
+names(d) = c('대책: 가해자 처벌', '대책: 피해자 보호 및 구조', 'month')
+d = melt(d, id.vars='month')
+ggplot(data = d, 
+       mapping = aes(x = month, y = value, fill = variable, color = variable)) +
+  geom_line(lwd = 1.5) +
+  scale_colour_discrete(name = '프레임') +
+  theme(panel.grid.minor = element_blank(), 
+        panel.grid.major = element_line(color = "gray50", size = 0.5),
+        panel.grid.major.x = element_blank(),
+        panel.background = element_blank(),
+        plot.title = element_text(hjust = 0.5),
+        axis.ticks.length = unit(.25, "cm"),
+        axis.text.x = element_text(angle = 90, hjust = 1, size = 11, face='bold'),
+        axis.ticks.y = element_blank(),
+        axis.ticks.x = element_blank()) + 
+  coord_cartesian(xlim = c(-0.0001, 67), 
+                  ylim = c(-max(d$value)*0.08, max(d$value)*1.11), expand = FALSE) +
+  labs(list(title = paste0('시간 변화에 따른 토픽 규모 변화 - ', filename),
+            x = '시기(연도 및 월)', 
+            y = '토픽이 차지하는 비율')) +
+  scale_x_continuous(breaks = (c(0,50)), labels=c('', '')) +
+  annotate(geom = 'text', 
+           x = seq(1, 66, 1),
+           y = -max(d$value)*0.03, size = 2,
+           label = c(rep(c('1', '4', '7', '10'), 16), '1', '4')) +
+  annotate(geom = 'text', 
+           x = seq(2, 66, 4),
+           y = -max(d$value)*0.06, size = 3,
+           label = seq(2002, 2018, 1))
+ggsave(paste0('images/', filename, ' solutions.png'), width = 30, height=24, dpi = 300, units="cm")

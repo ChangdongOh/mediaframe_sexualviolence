@@ -70,5 +70,19 @@ cairo_pdf(paste0(seed, "summary", K, ".pdf"), family="Malgun Gothic", width=10, 
 plot(stmmodel, type="summary", text.cex=0.3)
 dev.off()
 
-sample(findThoughts(stmmodel, texts=short, n=300, topics=17
+sample(findThoughts(stmmodel, texts=short, n=300, topics=51
                     )$docs[[1]], 30)
+
+mod.out.corr <- topicCorr(stmmodel)
+adjmatrix = mod.out.corr$poscor*10
+#sort(adjmatrix, decreasing = T)
+
+library(igraph)
+
+graph = simplify(graph_from_adjacency_matrix(adjmatrix, mode='undirected'))
+cg = cluster_fast_greedy(graph)
+V(graph)$label.cex = 1
+plot(graph, 
+     layout = layout.fruchterman.reingold(graph),
+     vertex.size = 7,
+     edge.width = 2)
